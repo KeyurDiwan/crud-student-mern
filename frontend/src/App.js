@@ -11,7 +11,7 @@ const App = () => {
 
       <Routes>
             <Route path = '/' element = { <StudentPage />} > </Route>
-          
+          <Route path = '/page/:pageNumber' element = { <StudentPage />} > </Route>
             {/* <Route path='/mail' element={<StudentPage />} > </Route> */}
 
              

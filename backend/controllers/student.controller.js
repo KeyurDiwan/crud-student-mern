@@ -37,6 +37,7 @@ exports.getAllStudents = asyncHandler( async ( req, res, next ) => {
 
 
     query = Student.find( JSON.parse( queryStr ) );
+    // console.log( query );
 
     if ( req.query.sort ) {
         
@@ -60,7 +61,7 @@ exports.getAllStudents = asyncHandler( async ( req, res, next ) => {
 
 
     } else {
-        query = query.sort( '-testMArk' );
+        query = query.sort( '-testMark' );
     }
 
 
@@ -69,22 +70,76 @@ exports.getAllStudents = asyncHandler( async ( req, res, next ) => {
 
 
     /*------------------------------------------------------ */
+    // add pagination..!!
+
+   
+    // res.status( 200 ).json( {
+    //     success: true,
+    //    
+    //     uiValues,
+    // } );
+
+    
+    
+    /*------------------------------------------------------ */
 
 
     // Get All Students Data..!!
-    const student = await query    // Student.find(JSON.parse(queryStr));
+    // console.log(Student.find())
+    // Student.find(JSON.parse(queryStr));
 
-    const maxMarks = await Student.find().sort({testMark: -1}).limit(1).select("-_id testMark");
+  
+        // const page= +req.query.page || 1;
+        // const size = +req.query.size || 2;
 
-    const minMarks = await Student.find().sort({testMark: 1}).limit(1).select("-_id testMark");
+        // const skip=(page-1)*size;
+
+        // const users= await Student.find({}).skip(skip).limit(size).lean().exec();
+        // res.status(200).send(users);
+
+
+
+    const page = parseInt( req.query.page ) || 1;
+    const pageSize = parseInt( req.query.limit ) || 12;
+    const skip = ( page - 1 ) * pageSize;
+    const total = await Student.countDocuments();
+
+    const pages = Math.ceil( total / pageSize );
+
+    query = query.skip( skip ).limit( pageSize );
+
+    if ( page > pages ) {
+      return   res.status( 400 ).json( {
+            success: false,
+            message: 'Page not found'
+        } );
+    }
+
+
+
+    // const result = await query;
+       const student = await query 
+// console.log(query)
+        const maxMarks = await query.find().sort({testMark: -1}).limit(1).select("-_id testMark");
+
+    const minMarks = await query.find().sort( { testMark: 1 } ).limit( 1 ).select( "-_id testMark" );
+   
 
     uiValues.maxMarks = maxMarks[0].testMark;
     uiValues.minMarks = minMarks[0].testMark;
 
+
+
     res.status( 200 ).json( {
         success: true,
         data: student,
+        count: student.length,
+        total,
+        pages,
+        page,
+        pageSize,
         uiValues,
+        // users
     } );
 } );
 

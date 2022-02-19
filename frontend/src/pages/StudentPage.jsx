@@ -1,8 +1,9 @@
 import { Button, CircularProgress, Container, FormControl, FormControlLabel, Grid, makeStyles, Paper, Radio, RadioGroup, Slider, TextField, Typography } from '@material-ui/core'
 import {useEffect, useState} from 'react';
 import axios from 'axios';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams  } from 'react-router-dom';
 import StudentCard from '../components/StudentCard';
+import Pagination from '../components/Pagination';
 
 
 const useStyles = makeStyles( {
@@ -28,7 +29,11 @@ const useStyles = makeStyles( {
     },
 })
 
-const StudentPage = () => {
+const StudentPage = (  ) => {
+    
+    // 
+    const match = { params: useParams() };
+  const pageNumber = match.params.pageNumber || 1
 
     // Material ui styles 
     const classes = useStyles();
@@ -41,13 +46,17 @@ const StudentPage = () => {
     // components state
     const [students, setStudents] = useState( [] );
     const [loading, setLoading] = useState( false );
+    const [pages, setPages] = useState( 1 );
+    const [numPage, setNumPage] = useState( pageNumber );
 
     const [sliderMax, setSliderMax] = useState( 100 );
     const [markRange, setMarkRange] = useState( [0, 100] );
     const [markOrder, setMarkOrder] = useState( "descending" );
 
+
     const [filter, setFilter] = useState( "" );
     const [sorting, setSorting] = useState( "" );
+    const[filterForPagination, setFilterForPagination] = useState( "" );
 
     const updateUIValues = ( uiValues ) => {
         setSliderMax( uiValues.maxMark );
@@ -75,6 +84,7 @@ const StudentPage = () => {
             setLoading( true );
             try {
                 let query;
+               
 
                 if (params && !filter) {
                     query = params;
@@ -90,6 +100,14 @@ const StudentPage = () => {
                     }
                 }
 
+                if ( numPage ) {
+                     if ( query.length === 0 ) {
+                        query = `?page=${numPage}`
+                    } else {
+                        query = query + "&page=" + numPage;
+                    }
+                }
+              
                 const { data } = await axios( {
                     method: 'GET',
                     url: `http://localhost:3001/api/v1/student${query}`,
@@ -97,7 +115,9 @@ const StudentPage = () => {
                 } );
 
                 setStudents( data.data );
-                // console.log(data.student)
+                setPages( data.pages );
+                // console.log( data.pages );
+
                 setLoading( false );
                 updateUIValues( data.uiValues );
                 
@@ -110,7 +130,7 @@ const StudentPage = () => {
 
         return () => cancel();
 
-    }, [filter, params, sorting] );
+    }, [filter, params, sorting, numPage,filterForPagination] );
 
     const handleMarkInputChange = ( e, type ) => {
         
@@ -149,7 +169,7 @@ const StudentPage = () => {
     };
 
     const buildRangeFilter = ( newValue ) => {
-        const urlFilter = `?testMark[gte]=${ newValue[0] }&testMark[lte]=${ newValue[1] }`;
+        const urlFilter = `?testMark[gte]=${ newValue[0] }&testMark[lte]=${ newValue[1] }&page=${numPage}`;
         
         setFilter( urlFilter );
         
@@ -175,6 +195,16 @@ const StudentPage = () => {
         setMarkRange( [0, 100] );
         navigate( "/" );
     };
+
+    const paginationFun = () => {
+
+      console.log("fjfffj")
+
+        const urlFilter = `?page=${ numPage }`;
+        setFilterForPagination( urlFilter );
+        navigate( urlFilter );
+
+    }
     
 
  
@@ -185,7 +215,9 @@ const StudentPage = () => {
     
      
       <Container className={classes.root}>
-          
+
+          {/* Pagination */}
+        
           {/* Filtering and sorting */}
           <Paper className = {classes.paper}>
               <Grid container spacing={3}>
@@ -267,6 +299,9 @@ const StudentPage = () => {
         </Paper>
 
 
+          <Pagination numPage={numPage} pages={pages} changePage={setNumPage} />
+
+
 
           {/* student listing */}
 
@@ -285,6 +320,8 @@ const StudentPage = () => {
               )}
           </Grid>
 
+
+           <Pagination numPage = {numPage} pages = {pages}  changePage = {setNumPage} onClick = {paginationFun} />
 
       </Container>
       
