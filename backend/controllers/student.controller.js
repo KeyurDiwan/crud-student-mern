@@ -50,7 +50,7 @@ exports.getAllStudents = asyncHandler( async ( req, res, next ) => {
                 order = 'ascending';
             }
 
-            uiValues.sorting[value.replace( '-', '' )] = order;
+            uiValues.sorting[val.replace( '-', '' )] = order;
             
         } );
         
